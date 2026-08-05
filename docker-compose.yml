@@ -1,0 +1,48 @@
+services:
+  # ----------------------------------------------------
+  # 1. Backend (FastAPI 서버) - 24시간 가동
+  # ----------------------------------------------------
+  esg-api-server:
+    build: .
+    container_name: esg_api_server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./:/app  # 코드 수정 시 바로 반영되도록(Hot-reload) 볼륨 연결
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # ----------------------------------------------------
+  # 2. Frontend (Streamlit 화면) - 24시간 가동
+  # ----------------------------------------------------
+  esg-web-ui:
+    build: .
+    container_name: esg_web_ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      # 도커 내부 통신: localhost 대신 api 서버의 컨테이너 이름을 사용!
+      - API_URL=http://esg-api-server:8000/api/analyze
+    depends_on:
+      - esg-api-server
+    command: ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+  # ----------------------------------------------------
+  # 3. Data ETL (데이터 수집 배치) - 필요할 때만 수동 실행
+  # ----------------------------------------------------
+  esg-etl-job:
+    build: .
+    container_name: esg_etl_job
+    volumes:
+      - ./data:/app/data
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["python", "-m", "src.etl.pipeline"]
+    profiles:
+      - etl  # 평상시에는 켜지지 않고, 원할 때만 실행되도록 프로필 분리
