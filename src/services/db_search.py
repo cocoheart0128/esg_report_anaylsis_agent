@@ -2,6 +2,12 @@
 import lancedb
 from langchain_huggingface import HuggingFaceEmbeddings
 
+# Streamlit Cloud 환경이거나 쓰기 권한이 문제될 경우 /tmp 경로 사용
+if os.path.exists("/app") and not os.access("/app", os.W_OK):
+    DB_PATH = os.path.join(tempfile.gettempdir(), "esg_lancedb")
+else:
+    DB_PATH = "data/esg_lancedb"  # 로컬 개발 환경용
+
 def search_esg_database(query_text: str, isu_cd: str = None, year: str = None, db_path: str = "/app/data/esg_lancedb"):
     """DB 연결, 임베딩, 하이브리드 검색을 전담하는 유틸 함수"""
     embeddings = HuggingFaceEmbeddings(model_name="jhgan/ko-sroberta-multitask")
