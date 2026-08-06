@@ -15,6 +15,8 @@ COPY ./data ./data
 COPY main.py .
 COPY app.py .
 
+RUN chmod -R 777 /app/data
+
 # 컨테이너 실행 시 파이프라인 실행
 # CMD ["python", "-m", "src.etl.pipeline"]
 
