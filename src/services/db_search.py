@@ -1,6 +1,8 @@
 # src/services/db_search.py
 import lancedb
 from langchain_huggingface import HuggingFaceEmbeddings
+import os
+import tempfile
 
 # Streamlit Cloud 환경이거나 쓰기 권한이 문제될 경우 /tmp 경로 사용
 if os.path.exists("/app") and not os.access("/app", os.W_OK):
@@ -8,7 +10,7 @@ if os.path.exists("/app") and not os.access("/app", os.W_OK):
 else:
     DB_PATH = "data/esg_lancedb"  # 로컬 개발 환경용
 
-def search_esg_database(query_text: str, isu_cd: str = None, year: str = None, db_path: str = "/app/data/esg_lancedb"):
+def search_esg_database(query_text: str, isu_cd: str = None, year: str = None, db_path: str = DB_PATH):
     """DB 연결, 임베딩, 하이브리드 검색을 전담하는 유틸 함수"""
     embeddings = HuggingFaceEmbeddings(model_name="jhgan/ko-sroberta-multitask")
     db = lancedb.connect(db_path)
@@ -45,7 +47,7 @@ def make_viewer_url(acptno):
     return None
 
 # 🌟 [추가] tb_esg_grade_info 정형 테이블 조회를 전담하는 함수
-def get_esg_grade_from_lancedb(isu_cd: str, year: str = None, db_path: str = "/app/data/esg_lancedb"):
+def get_esg_grade_from_lancedb(isu_cd: str, year: str = None, db_path: str = DB_PATH):
     try:
         import lancedb
         db = lancedb.connect(db_path)
@@ -109,7 +111,7 @@ def get_esg_grade_from_lancedb(isu_cd: str, year: str = None, db_path: str = "/a
 # ==========================================
 # 🌟 0. DB 조회 함수 (업그레이드: 정형 데이터 테이블 검사 및 판다스 직접 필터링)
 # ==========================================
-def get_company_data_years(db_path: str = "/app/data/esg_lancedb", isu_cd: str = None) -> list:
+def get_company_data_years(db_path: str = DB_PATH, isu_cd: str = None) -> list:
     """LanceDB를 조회하여 해당 기업의 대시보드 데이터(정형)가 존재하는 모든 연도 목록을 반환합니다."""
     try:
         import lancedb
