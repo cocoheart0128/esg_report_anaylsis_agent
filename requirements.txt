@@ -24,3 +24,4 @@ langgraph
 langchain-core 
 pydantic
 finance-datareader
+torchvision
