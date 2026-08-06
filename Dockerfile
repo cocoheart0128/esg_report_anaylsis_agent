@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 소스 코드 복사
 COPY ./src ./src
+COPY ./data ./data
 COPY main.py .
 COPY app.py .
 
