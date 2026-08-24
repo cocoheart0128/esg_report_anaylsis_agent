@@ -102,8 +102,6 @@ with st.sidebar:
 # 2. 상단 영역: 모던 2열 레이아웃 대시보드 & 챗봇 렌더링
 # ==========================================
 
-# 🌟 화면 좌우 분할 (비율: 왼쪽 대시보드 1.1 : 오른쪽 채팅 0.9)
-
 # ==========================================
 # [좌측 컬럼] 정형 ESG 핵심 지표 대시보드
 # ==========================================
@@ -242,10 +240,25 @@ st.divider()
 
 st.subheader("💬 AI 공시 보고서 심층 질의응답")
 
+# ==========================================
+# 🌟 [수정된 부분] 회사 코드 변경 감지 및 채팅 내역 초기화 로직
+# ==========================================
+if "current_isu_cd" not in st.session_state:
+    st.session_state.current_isu_cd = ""
+
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "안녕하세요! 보고서에 있는 ESG 관련 정보를 물어보세요.", "sources": []}
     ]
+
+# 검색된 기업 코드(isu_cd)가 이전과 다르면 챗봇 메시지 초기화
+if isu_cd and isu_cd != st.session_state.current_isu_cd:
+    st.session_state.current_isu_cd = isu_cd
+    st.session_state.messages = [
+        {"role": "assistant", "content": f"안녕하세요! 새롭게 선택된 기업({isu_cd})의 ESG 관련 정보를 물어보세요.", "sources": []}
+    ]
+# ==========================================
+
 
 # 🌟 st.container에 border=True를 주면 테두리 박스가 깔끔하게 생성됩니다!
 with st.container(border=True):
