@@ -87,6 +87,8 @@ pip install -r requirements.txt
 OPENAI_API_KEY=your_openai_key
 GOOGLE_API_KEY=your_google_key
 ANTHROPIC_API_KEY=your_anthropic_key
+SUPABASE_URL=https://ydpimlmcjmehwgnnonbi.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 MODEL_NAME=gemini-1.5-pro
 ```
 

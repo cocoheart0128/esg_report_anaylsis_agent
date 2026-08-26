@@ -240,9 +240,7 @@ st.divider()
 
 st.subheader("💬 AI 공시 보고서 심층 질의응답")
 
-# ==========================================
-# 🌟 [수정된 부분] 회사 코드 변경 감지 및 채팅 내역 초기화 로직
-# ==========================================
+# 🌟 회사 코드 변경 감지 및 채팅 내역 초기화 로직
 if "current_isu_cd" not in st.session_state:
     st.session_state.current_isu_cd = ""
 
@@ -257,13 +255,12 @@ if isu_cd and isu_cd != st.session_state.current_isu_cd:
     st.session_state.messages = [
         {"role": "assistant", "content": f"안녕하세요! 새롭게 선택된 기업({isu_cd})의 ESG 관련 정보를 물어보세요.", "sources": []}
     ]
-# ==========================================
 
+# 🌟 [해결책] 채팅 내역이 그려질 "고정된 컨테이너"를 명시적으로 분리합니다.
+chat_container = st.container(border=True)
 
-# 🌟 st.container에 border=True를 주면 테두리 박스가 깔끔하게 생성됩니다!
-with st.container(border=True):
-    
-    # 내부 대화 내용 출력
+# 1. 채팅 컨테이너 안에 기존 메시지 출력
+with chat_container:
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -275,11 +272,16 @@ with st.container(border=True):
                         display_text = display_text if len(display_text) < 400 else display_text[:400] + "..."
                         st.info(display_text)
 
-    # 사용자 채팅 입력 및 RAG API 통신
-    if (not isu_cd) or available_years:
-        if prompt := st.chat_input("질문을 입력하세요 (예: 이사회 안건 요약해 줘)"):
-            
-            st.session_state.messages.append({"role": "user", "content": prompt, "sources": []})
+# 2. 사용자 입력 및 새로운 메시지 처리 (컨테이너 밖의 하단에 입력창 배치)
+if (not isu_cd) or available_years:
+    if prompt := st.chat_input("질문을 입력하세요 (예: 이사회 안건 요약해 줘)"):
+        
+        # 사용자 메시지 세션에 먼저 추가
+        st.session_state.messages.append({"role": "user", "content": prompt, "sources": []})
+        
+        # 🌟 새로 생성되는 질문과 답변도 "chat_container" 안에 그리도록 강제합니다.
+        # 이렇게 하면 입력창(st.chat_input)이 답변들 아래로 밀려나지 않고 제자리를 유지합니다.
+        with chat_container:
             with st.chat_message("user"):
                 st.markdown(prompt)
 

@@ -11,7 +11,10 @@ else:
     DB_PATH = "data/esg_lancedb"  # 로컬 개발 환경용
 
 def search_esg_database(query_text: str, isu_cd: str = None, year: str = None, db_path: str = DB_PATH):
-    """DB 연결, 임베딩, 하이브리드 검색을 전담하는 유틸 함수"""
+    """DB 연결, 임베딩, 하이브리드 검색을 전담하는 유틸 함수
+    
+    Note: Falls back to vector-only search if FTS index is not available
+    """
     embeddings = HuggingFaceEmbeddings(model_name="jhgan/ko-sroberta-multitask")
     db = lancedb.connect(db_path)
     table = db.open_table("tb_esg_corp_gov_report")
@@ -23,11 +26,23 @@ def search_esg_database(query_text: str, isu_cd: str = None, year: str = None, d
 
     query_vector = embeddings.embed_query(query_text)
 
-    search_req = table.search(query_type="hybrid").vector(query_vector).text(query_text).limit(10)
-    if filter_str:
-        search_req = search_req.where(filter_str, prefilter=True)
-        
-    results = search_req.to_list()
+    # Try hybrid search first, fall back to vector-only if FTS index is missing
+    try:
+        search_req = table.search(query_type="hybrid").vector(query_vector).text(query_text).limit(10)
+        if filter_str:
+            search_req = search_req.where(filter_str, prefilter=True)
+        results = search_req.to_list()
+        print("✅ [검색] 하이브리드 검색 성공 (벡터 + 전문검색)")
+    except ValueError as e:
+        if "INVERTED index" in str(e):
+            print("⚠️ [검색] FTS 인덱스 미생성, 벡터 검색으로 대체합니다")
+            # Fallback: vector-only search (pass query_vector directly to search method)
+            search_req = table.search(query_vector).limit(10)
+            if filter_str:
+                search_req = search_req.where(filter_str, prefilter=True)
+            results = search_req.to_list()
+        else:
+            raise  # Re-raise if it's a different error
     
     docs_data = []
     for res in results:

@@ -22,6 +22,8 @@ uvicorn
 streamlit
 langgraph 
 langchain-core 
+supabase
 pydantic
 finance-datareader
 torchvision
+pdfplumber

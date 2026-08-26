@@ -148,24 +148,38 @@ class ESGExtractor:
         # 내부 메서드 호출은 self. 를 사용합니다.
         df = self.fetch_esg_data(start_yr=start_yr, end_yr=end_yr, isu_cd=isu_cd)
         
-        if not df.empty and 'acpt_no2' in df.columns:
-            print("\n=== 2. acpt_no2 기반 문서 JSON 병렬 추출 시작 ===")
+        if df.empty:
+            print("수집된 데이터가 없습니다.")
+            return df
+            
+        # 🌟 acpt_no1 데이터 추출 추가
+        if 'acpt_no1' in df.columns:
+            print("\n=== 2. acpt_no1 기반 문서 JSON 병렬 추출 시작 ===")
+            print(f"총 {len(df)}건의 데이터 중 acpt_no1이 존재하는 행을 처리합니다. 잠시만 기다려주세요...")
+            
+            with ThreadPoolExecutor(max_workers=15) as executor:
+                json_results_1 = list(executor.map(self._get_full_json, df['acpt_no1']))
+                
+            df['acpt_no1_doc_json'] = json_results_1
+        else:
+            print("\n수집된 데이터에 'acpt_no1' 컬럼이 존재하지 않습니다.")
+
+        # acpt_no2 데이터 추출
+        if 'acpt_no2' in df.columns:
+            print("\n=== 3. acpt_no2 기반 문서 JSON 병렬 추출 시작 ===")
             print(f"총 {len(df)}건의 데이터 중 acpt_no2가 존재하는 행을 처리합니다. 잠시만 기다려주세요...")
             
             with ThreadPoolExecutor(max_workers=15) as executor:
-                # 내부 메서드인 self._get_full_json 을 매핑합니다.
-                json_results = list(executor.map(self._get_full_json, df['acpt_no2']))
+                json_results_2 = list(executor.map(self._get_full_json, df['acpt_no2']))
                 
-            df['acpt_no2_doc_json'] = json_results
-            
-            print("\n=== 작업 완료 ===")
-            
-            # 최종 완성된 DataFrame을 반환하여 외부에서(CSV 저장 등) 활용할 수 있게 합니다.
-            return df
-            
+            df['acpt_no2_doc_json'] = json_results_2
         else:
-            print("수집된 데이터가 없거나 'acpt_no2' 컬럼이 존재하지 않습니다.")
-            return df
+            print("\n수집된 데이터에 'acpt_no2' 컬럼이 존재하지 않습니다.")
+            
+        print("\n=== 모든 JSON 추출 작업 완료 ===")
+        
+        # 최종 완성된 DataFrame을 반환하여 외부에서(CSV 저장 등) 활용할 수 있게 합니다.
+        return df
 
 # # ==========================================
 # # 메인 실행부 (매우 간결해짐)

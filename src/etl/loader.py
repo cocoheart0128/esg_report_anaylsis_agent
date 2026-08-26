@@ -119,3 +119,27 @@ class ESGLoader:
             table.add(flat_data)
             
         print(f"✅ [{table_name}] 비정형 벡터 데이터 Flat 적재 완료!")
+
+    # ==========================================
+    # 3. FTS 인덱스 생성 함수
+    # ==========================================
+    def create_fts_index(self, table_name: str = "tb_esg_corp_gov_report", column_name: str = "text"):
+        """
+        전문검색(FTS) 인덱스를 생성합니다.
+        하이브리드 검색(벡터 + FTS)을 사용하려면 반드시 호출해야 합니다.
+        """
+        try:
+            if table_name not in self.db.table_names():
+                print(f"⚠️ [{table_name}] 테이블이 존재하지 않습니다.")
+                return False
+            
+            table = self.db.open_table(table_name)
+            print(f"🔍 [{table_name}] {column_name} 컬럼에 FTS 인덱스를 생성 중...")
+            
+            # LanceDB에서 FTS 인덱스 생성
+            table.create_fts_index(column_name, replace=True)
+            print(f"✅ [{table_name}] FTS 인덱스 생성 완료! 이제 하이브리드 검색이 가능합니다.")
+            return True
+        except Exception as e:
+            print(f"❌ [{table_name}] FTS 인덱스 생성 실패: {e}")
+            return False

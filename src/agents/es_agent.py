@@ -1,11 +1,36 @@
 # src/agents/es_agent.py
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from src.core.llm_factory import LLMFactory
 from src.schemas.agent_schemas import AgentState
+from src.services.db_search import search_esg_database # 👈 검색 기능 가져오기
 
 def node_es_agent(state: AgentState):
-    print("🌿 [E/S Agent] 지속가능경영(환경/사회) 안내 멘트 생성 중...")
-    fallback_msg = (
-        "요청하신 내용은 **환경(E) 및 사회(S) 관련 지속가능경영 분야**입니다.\n\n"
-        "현재 시스템은 1단계 구축 중으로 **'지배구조(G)'** 관련 데이터만 분석이 가능합니다. "
-        "빠른 시일 내에 환경 및 사회 데이터 파이프라인을 연결하여 답변드릴 수 있도록 하겠습니다."
+    print("🌿 [E/S Agent] 지속가능경영(환경/사회) 보고서 검색 및 답변 생성 중...")
+    
+    query_text = state["query"]
+    
+    # 1. 분리된 검색 함수를 호출하여 데이터만 쏙 가져옴
+    docs_data = search_esg_database(
+        query_text=query_text,
+        isu_cd=state.get("isu_cd"),
+        year=state.get("year")
     )
-    return {"answer": fallback_msg, "sources": []}
+
+    context_str = "\n\n".join(f"[기업명: {d['com_abbrv']}]\n{d['text']}" for d in docs_data)
+
+    # 2. LLM 답변 초안 생성
+    llm = LLMFactory.get_llm(provider=state["llm_provider"])
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", """당신은 지속가능경영(환경 및 사회) 전문 애널리스트입니다.
+        제공된 검색 결과(Context)를 바탕으로 사용자의 질문에 전문적이고 명확하게 답변하세요.
+        문서에 없는 내용은 지어내지 마세요.
+        
+        [Context]
+        {context}"""),
+        ("human", "{question}")
+    ])
+    
+    answer = (prompt | llm | StrOutputParser()).invoke({"context": context_str, "question": query_text})
+    
+    return {"draft_answer": answer, "sources": docs_data}
