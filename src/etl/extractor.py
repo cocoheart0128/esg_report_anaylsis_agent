@@ -7,6 +7,10 @@ import json  # 추가됨
 from bs4 import BeautifulSoup  # 추가됨
 from concurrent.futures import ThreadPoolExecutor  # 추가됨
 
+########################################################################################
+##############입력된 기업코드/명 기반으로 ESG 데이터 수집 및 JSON 추출 클래스 정의##############
+########################################################################################
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class ESGExtractor:
@@ -46,24 +50,6 @@ class ESGExtractor:
             time.sleep(0.5)
             
         return pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
-
-    def get_document_urls(self, acptno: str) -> dict:
-        """접수번호(acptno)를 기반으로 본문 및 목차(TOC) URL을 추출합니다."""
-        if pd.isna(acptno) or not str(acptno).strip():
-            return None
-            
-        # 1. 문서 번호 조회
-        doc_nos = self._get_krx_doc_nos(acptno)
-        if not doc_nos['main_doc_nos']:
-            return None
-            
-        # 2. URL 추출 (첫 번째 메인 문서만 처리하도록 간소화)
-        target_doc_no = doc_nos['main_doc_nos'][0]
-        urls = self._fetch_urls_by_docno(target_doc_no)
-        
-        if urls['toc_url'] and urls['main_url']:
-            return urls
-        return None
 
     def _get_krx_doc_nos(self, acptno: str) -> dict:
         url = f"https://kind.krx.co.kr/common/disclsviewer.do?method=search&acptno={acptno}"

@@ -10,5 +10,6 @@ sudo docker compose down
 # sudo docker compose up -d
 # ##전체실행
 sudo docker compose up -d --build
-sudo docker logs -f esg_api_server
+sudo docker compose logs -f
+# sudo docker logs -f esg_api_server
 # sudo docker compose run --rm esg-etl-job python -u main.py

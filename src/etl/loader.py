@@ -4,6 +4,9 @@ import json
 from typing import Union, List
 from langchain_community.vectorstores import LanceDB
 from langchain_huggingface import HuggingFaceEmbeddings
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class ESGLoader:
     def __init__(self, db_path: str = "./data/esg_lancedb"):

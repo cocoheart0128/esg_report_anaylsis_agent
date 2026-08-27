@@ -18,6 +18,8 @@ def search_esg_database(query_text: str, isu_cd: str = None, year: str = None, d
     embeddings = HuggingFaceEmbeddings(model_name="jhgan/ko-sroberta-multitask")
     db = lancedb.connect(db_path)
     table = db.open_table("tb_esg_corp_gov_report")
+
+    table.to_pandas().to_csv("debug_tb_esg_corp_gov_report.csv", index=False,escapechar='\\')  # Debug: Save table to CSV for inspection
     
     filters = []
     if isu_cd: filters.append(f"isu_cd = '{isu_cd}'")
@@ -49,6 +51,14 @@ def search_esg_database(query_text: str, isu_cd: str = None, year: str = None, d
         docs_data.append({
             "com_abbrv": res.get("com_abbrv", "알수없음"),
             "eval_year": res.get("eval_year", "알수없음"),
+            "doc_se": res.get("doc_se", "알수없음"),
+            "doc_category": res.get("doc_category", "알수없음"),
+            "publish_dt": res.get("publish_dt"),
+            "doc_type": res.get("doc_type", "알수없음"),
+            "source_link": res.get("source_link"),
+            "source_title": res.get("source_title", "알수없음"),
+            "toc_name": res.get("toc_name", "알수없음"),
+            "page_number": res.get("page_number"),
             "text": res.get("text", ""),
             "score": res.get("_distance", res.get("score", res.get("_score", 0.0)))
         })
